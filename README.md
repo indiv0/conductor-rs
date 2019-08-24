@@ -1,5 +1,8 @@
 # conductor-rs
 
+[![Build Status](https://img.shields.io/azure-devops/build/indiv0/7dbcf843-e4bb-4c6d-8e6d-2dbeb5ca3b6b/5)](https://dev.azure.com/indiv0/conductor-rs/_build?definitionId=5)
+[![Coverage](https://img.shields.io/codecov/c/gh/indiv0/conductor-rs?token=c43247f3bba945dd804aa263991dae8babc123def456)](https://codecov.io/gh/indiv0/conductor-rs)
+
 Conductor-rs is a high level Conductor library for Rust.
 
 The crate is called `conductor` and you can depend on it via Cargo:
