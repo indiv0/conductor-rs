@@ -1,5 +1,16 @@
 # conductor-rs
-Rust client for Netflix Conductor
+
+Conductor-rs is a high level Conductor library for Rust.
+
+The crate is called `conductor` and you can depend on it via Cargo:
+
+```ini
+[dependencies]
+conductor = "0.1.0"
+```
+
+Documentation on the library can be found at
+[docs.rs/conductor](https://docs.rs/conductor).
 
 ## License
 
