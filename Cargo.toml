@@ -1,0 +1,31 @@
+[package]
+name = "conductor"
+version = "0.1.0"
+authors = ["Nikita Pekin <nikita@nikitapekin.com>"]
+edition = "2018"
+include = [
+    "Cargo.toml",
+    "LICENSE-APACHE",
+    "README.md",
+    "src/**/*.rs"
+]
+description = "Netflix Conductor client for Rust."
+homepage = "https://github.com/indiv0/conductor-rs"
+repository = "https://github.com/indiv0/conductor-rs"
+documentation = "https://docs.rs/conductor"
+readme = "README.md"
+keywords = [
+    "conductor",
+    "netflix",
+    "netflix-conductor"
+]
+categories = [
+    "api-bindings",
+    "asynchronous"
+]
+license = "Apache-2.0"
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[dependencies]
