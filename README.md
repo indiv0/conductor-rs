@@ -18,6 +18,7 @@ Documentation on the library can be found at
 ## License
 
 Original work Copyright 2018 Netflix, Inc.
+
 Modified work Copyright 2019 Nikita Pekin
 
 Licensed under the Apache License, Version 2.0 (the "License");
