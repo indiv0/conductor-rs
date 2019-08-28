@@ -7,7 +7,7 @@ Conductor-rs is a high level Conductor library for Rust.
 
 The crate is called `conductor` and you can depend on it via Cargo:
 
-```ini
+```toml
 [dependencies]
 conductor = "0.1.0"
 ```
