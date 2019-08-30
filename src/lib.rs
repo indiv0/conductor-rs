@@ -13,7 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! conductor-rs
+//! conductor-rs is a Netflix [Conductor](https://netflix.github.io/conductor/)
+//! client library implementation.
+//!
+//! # Quick Start
+//!
+//! To execute a workflow, you need a [`TaskDef`] for each task in your
+//! workflow:
+//! ```rust
+//! use conductor::TaskDef;
+//! #
+//! # fn main() {
+//! let get_spam = TaskDef::new("get_spam".to_string());
+//! let eat_spam = TaskDef::new("eat_spam".to_string());
+//! # }
+//! ```
 
 #![warn(
     anonymous_parameters,
@@ -40,8 +54,8 @@
 )]
 #![deny(rust_2018_idioms, unsafe_code)]
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test() {}
-}
+mod error;
+mod task;
+
+pub use error::Result;
+pub use task::TaskDef;
