@@ -1,3 +1,4 @@
+#![warn(macro_use_extern_crate)]
 #![deny(rust_2018_idioms, unsafe_code)]
 
 #[cfg(test)]
