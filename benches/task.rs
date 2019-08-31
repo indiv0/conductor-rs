@@ -17,6 +17,8 @@ use conductor::TaskDef;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn bench_simple(c: &mut Criterion) {
+    pretty_env_logger::try_init().expect("env_logger");
+
     let mut group = c.benchmark_group("TaskDef group");
 
     group.bench_function("TaskDef::new", |b| {
