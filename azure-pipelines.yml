@@ -2,12 +2,13 @@ stages:
   - template: azure/stages.yml@templates
     parameters:
       codecov_token: $(CODECOV_TOKEN_SECRET)
-      minrust: nightly-2019-08-20
+      minrust: nightly-2019-08-21
       benches: true
+      rust: nightly
 
 resources:
   repositories:
     - repository: templates
       type: github
-      name: crate-ci/azure-pipelines
+      name: indiv0/azure-pipelines
       endpoint: indiv0
