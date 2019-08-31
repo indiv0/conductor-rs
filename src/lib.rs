@@ -13,7 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![warn(macro_use_extern_crate)]
+//! conductor-rs
+
+#![warn(
+    anonymous_parameters,
+    deprecated_in_future,
+    elided_lifetimes_in_paths,
+    explicit_outlives_requirements,
+    future_incompatible,
+    indirect_structural_match,
+    keyword_idents,
+    macro_use_extern_crate,
+    meta_variable_misuse,
+    missing_debug_implementations,
+    missing_docs,
+    non_ascii_idents,
+    nonstandard_style,
+    private_in_public,
+    single_use_lifetimes,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unstable_features,
+    unused,
+    variant_size_differences
+)]
 #![deny(rust_2018_idioms, unsafe_code)]
 
 #[cfg(test)]
