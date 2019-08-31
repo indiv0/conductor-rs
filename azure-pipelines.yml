@@ -5,6 +5,7 @@ stages:
       minrust: nightly-2019-08-21
       benches: true
       rust: nightly
+      nightly_coverage: true
 
 resources:
   repositories:

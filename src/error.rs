@@ -27,10 +27,34 @@ pub struct Error {
     source: Option<Source>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum Kind {
+    /// An `http::Error` that occurred while handling an HTTP connection.
+    Http,
+    /// A `hyper::Error` that occurred while handling an HTTP stream.
+    Hyper,
+    /// Invalid argument was provided to a function.
+    InvalidArgument(InvalidArgument),
+    /*
+    /// An `io::Error` that occurred while handling IO.
+    Io,
+    */
     /// A `serde_json::Error` that occurred while (de)serializing JSON.
     Json,
+    /// Conductor server returned an unexpected status code.
+    Server(Server),
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum InvalidArgument {
+    /// User provided an empty `Vec<TaskDef>`.
+    EmptyTaskDefList,
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Server {
+    /// Server responded with an unexpected status code.
+    UnexpectedStatus,
 }
 
 impl Error {
@@ -41,6 +65,27 @@ impl Error {
     fn with<S: Into<Source>>(mut self, source: S) -> Self {
         self.source = Some(source.into());
         self
+    }
+
+    #[allow(dead_code)]
+    pub(crate) const fn kind(&self) -> &Kind {
+        &self.kind
+    }
+
+    pub(crate) fn new_invalid_argument(invalid_argument: InvalidArgument) -> Self {
+        Self::new(Kind::InvalidArgument(invalid_argument))
+    }
+
+    pub(crate) fn new_empty_task_def_list() -> Self {
+        Self::new_invalid_argument(InvalidArgument::EmptyTaskDefList)
+    }
+
+    pub(crate) fn new_server(server: Server) -> Self {
+        Self::new(Kind::Server(server))
+    }
+
+    pub(crate) fn new_unexpected_status() -> Self {
+        Self::new_server(Server::UnexpectedStatus)
     }
 }
 
@@ -68,7 +113,16 @@ impl fmt::Display for Error {
 impl StdError for Error {
     fn description(&self) -> &str {
         match self.kind {
+            Kind::Http => "HTTP connection error",
+            Kind::Hyper => "HTTP stream error",
+            Kind::InvalidArgument(InvalidArgument::EmptyTaskDefList) => {
+                "Empty task def list provided"
+            }
+            /*
+            Kind::Io => "IO error",
+            */
             Kind::Json => "JSON error",
+            Kind::Server(Server::UnexpectedStatus) => "Unexpected status code from server",
         }
     }
 
@@ -77,6 +131,18 @@ impl StdError for Error {
         self.source
             .as_ref()
             .map(|source| &**source as &(dyn StdError + 'static))
+    }
+}
+
+impl From<http::Error> for Error {
+    fn from(err: http::Error) -> Self {
+        Self::new(Kind::Http).with(err)
+    }
+}
+
+impl From<hyper::Error> for Error {
+    fn from(err: hyper::Error) -> Self {
+        Self::new(Kind::Hyper).with(err)
     }
 }
 

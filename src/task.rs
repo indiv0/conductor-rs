@@ -46,6 +46,7 @@ use serde::{Deserialize, Serialize};
 /// # Invariants
 ///
 /// * Tasks **MUST** have a unique name.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskDef {
     name: String,
@@ -70,7 +71,7 @@ impl TaskDef {
     /// }
     /// # }
     /// ```
-    pub fn new(name: String) -> Self {
+    pub const fn new(name: String) -> Self {
         Self { name }
     }
 
@@ -112,6 +113,46 @@ impl TaskDef {
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
+
+    /*
+    /// Returns the task's description, if any.
+    ///
+    /// # Examples
+    ///
+    /// Get the task's description and print it:
+    ///
+    /// ```rust
+    /// # use conductor::TaskDef;
+    /// #
+    /// # fn main() {
+    /// # let task_def = TaskDef::new("".to_string());
+    /// if let Some(description) = task_def.description() {
+    ///     println!("Task description: {}", description);
+    /// }
+    /// # }
+    /// ```
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_ref().map(String::as_ref)
+    }
+
+    /// Sets the task's description, if any.
+    ///
+    /// # Examples
+    ///
+    /// Setting the description to "Eat lunch":
+    ///
+    /// ```rust
+    /// # use conductor::TaskDef;
+    /// #
+    /// # fn main() {
+    /// # let mut task_def = TaskDef::new("".to_string());
+    /// task_def.set_description(Some("Eat lunch".to_string()));
+    /// # }
+    /// ```
+    pub fn set_description(&mut self, description: Option<String>) {
+        self.description = description
+    }
+    */
 }
 
 #[cfg(test)]

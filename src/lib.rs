@@ -28,6 +28,12 @@
 //! let eat_spam = TaskDef::new("eat_spam".to_string());
 //! # }
 //! ```
+//!
+//! Each [`TaskDef`] should be uploaded to the Conductor server using
+//! the [`MetadataClient`].
+//!
+//! [`TaskDef`]: ./struct.TaskDef.html
+//! [`MetadataClient`]: ./struct.MetadataClient.html
 
 #![warn(
     anonymous_parameters,
@@ -55,7 +61,9 @@
 #![deny(rust_2018_idioms, unsafe_code)]
 
 mod error;
+mod http;
 mod task;
 
+pub use crate::http::MetadataClient;
 pub use error::Result;
 pub use task::TaskDef;
