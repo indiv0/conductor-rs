@@ -24,6 +24,9 @@ doc:
 fmt:
 	cargo fmt
 
+run:
+	cargo run --example task_def
+
 test:
 	cargo test --doc
 	cargo test --all-features --all-targets
