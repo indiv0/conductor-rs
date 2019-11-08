@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::http::ErrorResponse;
+use http::StatusCode;
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -27,10 +29,37 @@ pub struct Error {
     source: Option<Source>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum Kind {
+    /// An `http::Error` that occurred while handling an HTTP connection.
+    Http,
+    /// A `hyper::Error` that occurred while handling an HTTP stream.
+    Hyper,
+    /// Invalid argument was provided to a function.
+    InvalidArgument(InvalidArgument),
+    /*
+    /// An `io::Error` that occurred while handling IO.
+    Io,
+    */
     /// A `serde_json::Error` that occurred while (de)serializing JSON.
     Json,
+    /// Conductor server returned an unexpected status code.
+    Server(Server),
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum InvalidArgument {
+    /// User provided an empty `Vec<TaskDef>`.
+    EmptyTaskDefList,
+}
+
+// TODO: do we really want `PartialEq` on this now that we implement ErrorResponse?
+#[derive(Debug, PartialEq)]
+pub(crate) enum Server {
+    /// TODO: docs
+    ErrorResponse(ErrorResponse),
+    /// Server responded with an unexpected status code.
+    UnexpectedStatus(StatusCode),
 }
 
 impl Error {
@@ -41,6 +70,31 @@ impl Error {
     fn with<S: Into<Source>>(mut self, source: S) -> Self {
         self.source = Some(source.into());
         self
+    }
+
+    #[allow(dead_code)]
+    pub(crate) const fn kind(&self) -> &Kind {
+        &self.kind
+    }
+
+    pub(crate) fn new_invalid_argument(invalid_argument: InvalidArgument) -> Self {
+        Self::new(Kind::InvalidArgument(invalid_argument))
+    }
+
+    pub(crate) fn new_empty_task_def_list() -> Self {
+        Self::new_invalid_argument(InvalidArgument::EmptyTaskDefList)
+    }
+
+    pub(crate) fn new_server(server: Server) -> Self {
+        Self::new(Kind::Server(server))
+    }
+
+    pub(crate) fn new_error_response(error_response: ErrorResponse) -> Self {
+        Self::new_server(Server::ErrorResponse(error_response))
+    }
+
+    pub(crate) fn new_unexpected_status(status_code: StatusCode) -> Self {
+        Self::new_server(Server::UnexpectedStatus(status_code))
     }
 }
 
@@ -57,18 +111,36 @@ impl fmt::Debug for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref source) = self.source {
-            write!(f, "{}: {}", self.description(), source)
-        } else {
-            f.write_str(self.description())
+        f.write_str(self.description())?;
+
+        match self.kind {
+            Kind::Server(Server::UnexpectedStatus(ref code)) => write!(f, ", status = {}", code)?,
+            Kind::Server(Server::ErrorResponse(ref err)) => write!(f, ", error response = {}", err)?,
+            _ => {},
         }
+
+        if let Some(ref source) = self.source {
+            write!(f, ": {}", source)?
+        }
+
+        Ok(())
     }
 }
 
 impl StdError for Error {
     fn description(&self) -> &str {
         match self.kind {
+            Kind::Http => "HTTP connection error",
+            Kind::Hyper => "HTTP stream error",
+            Kind::InvalidArgument(InvalidArgument::EmptyTaskDefList) => {
+                "Empty task def list provided"
+            }
+            /*
+            Kind::Io => "IO error",
+            */
             Kind::Json => "JSON error",
+            Kind::Server(Server::UnexpectedStatus(_)) => "Unexpected status code from server",
+            Kind::Server(Server::ErrorResponse(_)) => "Server returned an error",
         }
     }
 
@@ -77,6 +149,18 @@ impl StdError for Error {
         self.source
             .as_ref()
             .map(|source| &**source as &(dyn StdError + 'static))
+    }
+}
+
+impl From<http::Error> for Error {
+    fn from(err: http::Error) -> Self {
+        Self::new(Kind::Http).with(err)
+    }
+}
+
+impl From<hyper::Error> for Error {
+    fn from(err: hyper::Error) -> Self {
+        Self::new(Kind::Hyper).with(err)
     }
 }
 
