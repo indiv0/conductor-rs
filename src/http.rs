@@ -16,24 +16,74 @@
 use crate::error::{Error, Result};
 use crate::task::TaskDef;
 use futures_util::try_stream::TryStreamExt;
-use hyper::{header, Body, Client, Method, Request, StatusCode, Uri};
+use hyper::{header, Body, Client, Method, Request, Uri};
+use hyper::client::HttpConnector;
 use log::debug;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
-/// A Client to make requests to the Conductor metadata API.
-#[derive(Debug)]
-pub struct MetadataClient {
-    base_url: String,
+#[derive(Debug, Deserialize, PartialEq)]
+pub(crate) struct ErrorResponse {
+    status: u16, // TODO: make this match int size
+    code: Option<String>,
+    message: String,
+    instance: Option<String>,
+    retryable: bool,
+    #[serde(rename="validationErrors")]
+    validation_errors: ValidationErrorVec,
 }
 
-impl MetadataClient {
-    /// TODO: docs
-    pub fn new() -> Self {
-        Self::default()
+impl fmt::Display for ErrorResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: rewrite this to be a proper formatter.
+        write!(f, "[code=\"{:?}\", message=\"{}\", instance=\"{:?}\", retryable=\"{}\", validation errors=\"{}\"]", self.code, self.message, self.instance, self.retryable, self.validation_errors)
+    }
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+struct ValidationErrorVec(Vec<ValidationError>);
+
+impl fmt::Display for ValidationErrorVec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: rewrite this to be a proper formatter.
+        write!(f, "[")?;
+        for i in &self.0 {
+            write!(f, "{}", i)?;
+        }
+        write!(f, "]")
+    }
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+struct ValidationError {
+    path: String,
+    message: String,
+    invalid_value: Option<String>,
+}
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: rewrite this to be a proper formatter.
+        write!(f, "[path=\"{}\", message=\"{}\", invalid value=\"{:?}\"]", self.path, self.message, self.invalid_value)
+    }
+}
+
+#[derive(Debug)]
+struct BaseClient {
+    base_url: String,
+    client: Client<HttpConnector>,
+}
+
+impl BaseClient {
+    fn new(base_url: String) -> Self {
+        Self {
+            base_url,
+            client: Client::new(),
+        }
     }
 
     /// TODO: docs
-    pub fn set_base_url(&mut self, base_url: String) {
+    fn set_base_url(&mut self, base_url: String) {
         self.base_url = base_url;
     }
 
@@ -55,25 +105,27 @@ impl MetadataClient {
         req
     }
 
-    /// Creates new task definition(s).
-    ///
-    /// TODO
-    pub async fn create_new_task_definitions(&self, task_defs: &[TaskDef]) -> Result<()> {
-        if task_defs.is_empty() {
-            return Err(Error::new_empty_task_def_list());
-        }
-
-        let client = Client::new();
-        let req = self.post("metadata/taskdefs", task_defs)?;
-        let resp = client.request(req).await?;
+    async fn execute(&self, request: Request<Body>) -> Result<()> {
+        let resp = self.client.request(request).await?;
 
         let status = resp.status();
         debug!("Response: {:#?}", resp);
         let body = resp.into_body().try_concat().await?;
         debug!("Body: {:#?}", body);
 
-        if status != StatusCode::NO_CONTENT {
-            return Err(Error::new_unexpected_status());
+        if status.is_redirection() || status.is_client_error() || status.is_server_error() {
+            // TODO: don't throw away the URI, status code, and response body here.
+            match serde_json::from_slice(&body) {
+                Ok(error_response) => {
+                    panic!("{}", error_response);
+                    return Err(Error::new_error_response(error_response))
+                },
+                Err(err) => {
+                    // TODO: remove this
+                    panic!("{}, {:?}", err, &body);
+                    return Err(Error::new_unexpected_status(status))
+                }
+            }
         }
 
         assert!(body.is_empty());
@@ -81,10 +133,71 @@ impl MetadataClient {
     }
 }
 
+/// A client to make requests to the Conductor metadata API.
+///
+/// # Examples
+///
+/// Create a new `MetadataClient`:
+///
+/// ```rust
+/// use conductor::MetadataClient;
+///
+/// # fn main() {
+/// let metadata_client = MetadataClient::new();
+/// # }
+/// ```
+///
+/// Create new task definitions and register them on the Conductor server:
+/// ```rust,no_run
+/// use conductor::{MetadataClient, TaskDef};
+/// # use conductor::Result;
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<()> {
+/// let task_defs = vec![
+///     TaskDef::new("get_spam".to_string()),
+///     TaskDef::new("eat_spam".to_string()),
+/// ];
+/// let metadata_client = MetadataClient::new();
+/// metadata_client.create_new_task_definitions(&task_defs).await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct MetadataClient {
+    client: BaseClient,
+}
+
+impl MetadataClient {
+    /// Creates a new `MetadataClient`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// TODO: docs
+    pub fn set_base_url(&mut self, base_url: String) {
+        self.client.set_base_url(format!("{}/metadata", base_url));
+    }
+
+    /// Creates new task definition(s).
+    ///
+    /// TODO
+    pub async fn create_new_task_definitions(&self, task_defs: &[TaskDef]) -> Result<()> {
+        /*
+        if task_defs.is_empty() {
+            return Err(Error::new_empty_task_def_list());
+        }
+        */
+
+        let req = self.client.post("taskdefs", task_defs)?;
+        self.client.execute(req).await
+    }
+}
+
 impl Default for MetadataClient {
     fn default() -> Self {
         Self {
-            base_url: "http://localhost:8080/api".to_string(),
+            client: BaseClient::new("http://localhost:8080/api/metadata".to_string()),
         }
     }
 }
@@ -112,6 +225,7 @@ mod tests {
         (&*METADATA_CLIENT, rt)
     }
 
+    /*
     #[test]
     fn given_empty_task_def_vec_when_create_new_task_definitions_then_return_err() {
         use crate::error::{InvalidArgument, Kind};
@@ -121,6 +235,7 @@ mod tests {
         let res = rt.block_on(c.create_new_task_definitions(&Vec::new()));
         assert_matches!(res, Err(ref err) if *err.kind() == Kind::InvalidArgument(InvalidArgument::EmptyTaskDefList));
     }
+    */
 
     #[test]
     fn given_single_task_def_then_return_no_content() {

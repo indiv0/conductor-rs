@@ -22,15 +22,30 @@
 //! workflow:
 //! ```rust
 //! use conductor::TaskDef;
-//! #
-//! # fn main() {
-//! let get_spam = TaskDef::new("get_spam".to_string());
-//! let eat_spam = TaskDef::new("eat_spam".to_string());
-//! # }
+//!
+//! let task_defs = vec![
+//!     TaskDef::new("get_spam".to_string()),
+//!     TaskDef::new("eat_spam".to_string())
+//! ];
 //! ```
 //!
 //! Each [`TaskDef`] should be uploaded to the Conductor server using
-//! the [`MetadataClient`].
+//! the [`MetadataClient`]:
+//! ```rust,no_run
+//! use conductor::MetadataClient;
+//! # use conductor::TaskDef;
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+//! # let task_defs = vec![
+//! #     TaskDef::new("get_spam".to_string()),
+//! #     TaskDef::new("eat_spam".to_string())
+//! # ];
+//! let metadata_client = MetadataClient::new();
+//! metadata_client.create_new_task_definitions(&task_defs).await?;
+//! # Ok(())
+//! # }
+//! ```
 //!
 //! [`TaskDef`]: ./struct.TaskDef.html
 //! [`MetadataClient`]: ./struct.MetadataClient.html

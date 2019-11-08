@@ -23,6 +23,19 @@ fn init() -> (MetadataClient, Runtime) {
     (c, rt)
 }
 
+// TODO: maybe remove this whole test?
+#[cfg(feature = "integration_tests")]
+#[test]
+fn given_empty_task_def_vec_when_create_new_task_definitions_then_return_error_response() {
+    let (c, mut rt) = init();
+
+    let res = rt.block_on(c.create_new_task_definitions(&Vec::new()));
+    assert!(res.is_err());
+    // TODO: remove this
+    println!("{:?}", res);
+    panic!();
+}
+
 #[cfg(feature = "integration_tests")]
 #[test]
 fn given_one_task_def_when_create_new_task_definitions_then_return_ok() {

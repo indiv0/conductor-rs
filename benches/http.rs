@@ -20,7 +20,7 @@ use serde_json::json;
 use tokio::runtime::current_thread::Runtime;
 
 fn bench_simple(c: &mut Criterion) {
-    let _ = pretty_env_logger::try_init().expect("env_logger");
+    pretty_env_logger::try_init().expect("env_logger");
 
     let mut group = c.benchmark_group("HTTP group");
 

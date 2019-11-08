@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::http::ErrorResponse;
+use http::StatusCode;
 use std::error::Error as StdError;
 use std::fmt;
 
@@ -51,10 +53,13 @@ pub(crate) enum InvalidArgument {
     EmptyTaskDefList,
 }
 
+// TODO: do we really want `PartialEq` on this now that we implement ErrorResponse?
 #[derive(Debug, PartialEq)]
 pub(crate) enum Server {
+    /// TODO: docs
+    ErrorResponse(ErrorResponse),
     /// Server responded with an unexpected status code.
-    UnexpectedStatus,
+    UnexpectedStatus(StatusCode),
 }
 
 impl Error {
@@ -84,8 +89,12 @@ impl Error {
         Self::new(Kind::Server(server))
     }
 
-    pub(crate) fn new_unexpected_status() -> Self {
-        Self::new_server(Server::UnexpectedStatus)
+    pub(crate) fn new_error_response(error_response: ErrorResponse) -> Self {
+        Self::new_server(Server::ErrorResponse(error_response))
+    }
+
+    pub(crate) fn new_unexpected_status(status_code: StatusCode) -> Self {
+        Self::new_server(Server::UnexpectedStatus(status_code))
     }
 }
 
@@ -102,11 +111,19 @@ impl fmt::Debug for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref source) = self.source {
-            write!(f, "{}: {}", self.description(), source)
-        } else {
-            f.write_str(self.description())
+        f.write_str(self.description())?;
+
+        match self.kind {
+            Kind::Server(Server::UnexpectedStatus(ref code)) => write!(f, ", status = {}", code)?,
+            Kind::Server(Server::ErrorResponse(ref err)) => write!(f, ", error response = {}", err)?,
+            _ => {},
         }
+
+        if let Some(ref source) = self.source {
+            write!(f, ": {}", source)?
+        }
+
+        Ok(())
     }
 }
 
@@ -122,7 +139,8 @@ impl StdError for Error {
             Kind::Io => "IO error",
             */
             Kind::Json => "JSON error",
-            Kind::Server(Server::UnexpectedStatus) => "Unexpected status code from server",
+            Kind::Server(Server::UnexpectedStatus(_)) => "Unexpected status code from server",
+            Kind::Server(Server::ErrorResponse(_)) => "Server returned an error",
         }
     }
 
