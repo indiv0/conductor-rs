@@ -33,4 +33,4 @@ test:
 	cargo test $(CARGO_FLAGS)
 
 watch:
-	cargo watch -s make
+	cargo watch -s "make all run"
