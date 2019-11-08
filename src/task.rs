@@ -27,9 +27,7 @@ use serde::{Deserialize, Serialize};
 /// ```rust
 /// use conductor::TaskDef;
 /// #
-/// # fn main() {
 /// let task_def = TaskDef::new("eat_spam".to_string());
-/// # }
 /// ```
 ///
 /// Print a task's name:
@@ -37,10 +35,8 @@ use serde::{Deserialize, Serialize};
 /// ```rust
 /// # use conductor::TaskDef;
 /// #
-/// # fn main() {
 /// # let task_def = TaskDef::new("eat_spam".to_string());
 /// println!("Task name: {}", task_def.name());
-/// # }
 /// ```
 ///
 /// # Invariants
@@ -64,11 +60,9 @@ impl TaskDef {
     /// ```rust
     /// use conductor::TaskDef;
     /// #
-    /// # fn main() {
     /// if let Some(name) = std::env::args().skip(1).next() {
     ///     let task_def = TaskDef::new(name);
     /// }
-    /// # }
     /// ```
     pub fn new(name: String) -> Self {
         Self { name }
@@ -83,10 +77,8 @@ impl TaskDef {
     /// ```rust
     /// # use conductor::TaskDef;
     /// #
-    /// # fn main() {
     /// # let task_def = TaskDef::new("eat_spam".to_string());
     /// println!("Task name: {}", task_def.name());
-    /// # }
     /// ```
     pub fn name(&self) -> &str {
         &self.name
@@ -104,11 +96,10 @@ impl TaskDef {
     /// ```rust
     /// # use conductor::TaskDef;
     /// #
-    /// # fn main() {
     /// # let mut task_def = TaskDef::new("get_spam".to_string());
     /// task_def.set_name("eat_spam".to_string());
     /// println!("Task name: {}", task_def.name());
-    /// # }
+    /// ```
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
