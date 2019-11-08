@@ -25,7 +25,8 @@ fmt:
 	cargo fmt
 
 test:
-	cargo test
+	cargo test --doc
+	cargo test --all-features --all-targets
 
 watch:
 	cargo watch -s make
