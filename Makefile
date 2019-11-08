@@ -19,7 +19,7 @@ clippy:
 	cargo clippy -- $(CLIPPY_LINTS)
 
 doc:
-	cargo doc
+	cargo doc --all-features --no-deps
 
 fmt:
 	cargo fmt
