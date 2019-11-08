@@ -2,7 +2,7 @@ stages:
   - template: azure/stages.yml@templates
     parameters:
       codecov_token: $(CODECOV_TOKEN_SECRET)
-      minrust: nightly-2019-08-20
+      minrust: stable-2019-11-07
       benches: true
 
 resources:
