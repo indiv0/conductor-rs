@@ -13,9 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use conductor::TaskDef;
+use conductor::{MetadataClient, TaskDef};
 
-fn main() {
-    let task_def = TaskDef::new("eat_spam".to_string());
-    println!("Task definition: {:#?}", task_def);
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Create the task definitions.
+    let task_defs = vec![
+        TaskDef::new("get_spam".to_string()),
+        TaskDef::new("eat_spam".to_string()),
+    ];
+    println!("Task definitions: {:#?}", task_defs);
+
+    // Define the base URL of the Conductor server.
+    let url = "http://localhost:8080/api";
+
+    // Create the metadata client.
+    let mut metadata_client = MetadataClient::new();
+    metadata_client.set_base_url(url.to_string());
+
+    // Register the task definitions on the Conductor server.
+    metadata_client.create_new_task_definitions(&task_defs).await?;
+    println!("Registered task definitions");
+
+    Ok(())
 }
